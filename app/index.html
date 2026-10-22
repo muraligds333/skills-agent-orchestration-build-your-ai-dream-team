@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A contributor-friendly overview of project status, ownership, and recent activity.">
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="page-header">
+      <p class="page-header__eyebrow">Contributor workspace</p>
+      <h1 class="page-title">Project Pulse</h1>
+      <p class="page-subtitle">A clear view of what teams are working on, who owns each effort, and where contributors can help.</p>
+    </header>
+
+    <main class="dashboard">
+      <section aria-labelledby="dashboard-title">
+        <div class="dashboard__heading">
+          <div>
+            <h2 class="dashboard__title" id="dashboard-title">Projects</h2>
+            <p class="dashboard__caption">Current status and the latest team activity.</p>
+          </div>
+        </div>
+        <p class="empty-state" id="loading-state" role="status">Loading projects...</p>
+        <p class="empty-state" id="empty-state" role="status" hidden>No projects are available right now.</p>
+        <p class="error-state" id="error-state" role="alert" hidden>Projects could not be loaded. Please try again later.</p>
+        <div class="dashboard__grid" id="project-grid" aria-live="polite" aria-busy="true"></div>
+      </section>
+    </main>
+
+    <script>
+      const projectGrid = document.querySelector("#project-grid");
+      const loadingState = document.querySelector("#loading-state");
+      const emptyState = document.querySelector("#empty-state");
+      const errorState = document.querySelector("#error-state");
+      const allowedStatuses = new Set([
+        "active",
+        "on-track",
+        "blocked",
+        "at-risk",
+        "planning",
+        "upcoming",
+        "complete",
+        "completed",
+      ]);
+
+      function getStatusAttribute(status) {
+        const normalizedStatus = String(status ?? "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+        const aliases = {
+          "in-progress": "active",
+          "needs-attention": "at-risk",
+          "on-schedule": "on-track",
+        };
+        const mappedStatus = aliases[normalizedStatus] || normalizedStatus;
+        return allowedStatuses.has(mappedStatus) ? mappedStatus : "planning";
+      }
+
+      function getPriority(project) {
+        const priority = String(project.priority ?? "").trim().toLowerCase();
+        return ["high", "medium", "low"].includes(priority) ? priority : "low";
+      }
+
+      function createTextElement(tagName, className, text) {
+        const element = document.createElement(tagName);
+        element.className = className;
+        element.textContent = text;
+        return element;
+      }
+
+      function createProjectCard(project, index) {
+        const card = document.createElement("article");
+        const priority = getPriority(project);
+        const titleId = `project-title-${index + 1}`;
+        card.className = "project-card";
+        card.dataset.priority = priority;
+        card.setAttribute("aria-labelledby", titleId);
+
+        const header = document.createElement("header");
+        header.className = "project-card__header";
+        const name = createTextElement("h3", "project-card__name", project.name || "Untitled project");
+        name.id = titleId;
+        header.append(name);
+
+        const badges = document.createElement("div");
+        badges.className = "project-card__badges";
+        const status = document.createElement("span");
+        status.className = "status-badge";
+        status.dataset.status = getStatusAttribute(project.status);
+        status.textContent = project.status || "Status unavailable";
+        const priorityBadge = document.createElement("span");
+        priorityBadge.className = "priority-badge";
+        priorityBadge.dataset.priority = priority;
+        priorityBadge.textContent = `${priority.charAt(0).toUpperCase()}${priority.slice(1)} priority`;
+        badges.append(status, priorityBadge);
+
+        const owner = createTextElement("p", "project-card__owner", `Owner: ${project.owner || "Not specified"}`);
+        const summary = createTextElement("p", "project-card__summary", project.summary || "No summary provided.");
+        const activity = document.createElement("p");
+        activity.className = "project-card__activity";
+        const activityLabel = createTextElement("span", "project-card__activity-label", "Recent activity");
+        const activityText = document.createTextNode(project.recentActivity || "No recent activity provided.");
+        activity.append(activityLabel, activityText);
+
+        card.append(header, badges, owner, summary, activity);
+        return card;
+      }
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("project-data.json");
+          if (!response.ok) {
+            throw new Error(`Project data request failed with status ${response.status}`);
+          }
+
+          const data = await response.json();
+          if (!data || !Array.isArray(data.projects)) {
+            throw new Error("Project data must contain a projects array");
+          }
+
+          loadingState.hidden = true;
+          if (data.projects.length === 0) {
+            emptyState.hidden = false;
+            projectGrid.setAttribute("aria-busy", "false");
+            return;
+          }
+
+          const cards = data.projects.map((project, index) => createProjectCard(project || {}, index));
+          projectGrid.replaceChildren(...cards);
+          projectGrid.setAttribute("aria-busy", "false");
+        } catch (error) {
+          loadingState.hidden = true;
+          errorState.hidden = false;
+          projectGrid.setAttribute("aria-busy", "false");
+          console.error("Unable to load project data:", error);
+        }
+      }
+
+      loadProjects();
+    </script>
+  </body>
+</html>

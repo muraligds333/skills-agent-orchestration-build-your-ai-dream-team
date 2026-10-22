@@ -1,0 +1,36 @@
+{
+  "projects": [
+    {
+      "name": "Contributor Onboarding",
+      "owner": "Maya Chen",
+      "status": "On track",
+      "recentActivity": "Drafted the first-run checklist and scheduled a maintainer review.",
+      "priority": "High",
+      "summary": "Make it easier for new contributors to find a useful first task."
+    },
+    {
+      "name": "Build Reliability",
+      "owner": "Jordan Lee",
+      "status": "Needs attention",
+      "recentActivity": "Investigated intermittent failures in the nightly integration suite.",
+      "priority": "High",
+      "summary": "Reduce flaky checks so maintainers can trust routine build results."
+    },
+    {
+      "name": "Documentation Refresh",
+      "owner": "Samira Patel",
+      "status": "In progress",
+      "recentActivity": "Updated setup instructions and collected feedback from two contributors.",
+      "priority": "Medium",
+      "summary": "Keep contributor guidance accurate, concise, and easy to navigate."
+    },
+    {
+      "name": "Accessibility Improvements",
+      "owner": "Alex Rivera",
+      "status": "On track",
+      "recentActivity": "Completed a keyboard-navigation audit of the project dashboard.",
+      "priority": "Medium",
+      "summary": "Improve keyboard access and clarity across contributor-facing tools."
+    }
+  ]
+}
